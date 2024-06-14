@@ -1,0 +1,38 @@
+name: Publish Docker image
+on:
+  release:
+    #types: [published, released]
+    types: [published]
+jobs:
+  push_to_registry:
+    name: Push Docker image to GitHub Packages
+    #if: ${{ github.event.release.release }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+          lfs: true
+      - name: Checkout LFS objects
+        run: git lfs checkout
+      - name: Docker meta
+        id: docker_meta
+        uses: crazy-max/ghaction-docker-meta@v1
+        with:
+          images: ghcr.io/aluvare/docker-idrac6/docker-idrac6
+          tag-sha: true
+          tag-semver: |
+            {{major}}.{{minor}}s
+      - name: Push to GitHub Packages
+        uses: docker/build-push-action@v1
+        with:
+          path: .
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          repository: aluvare/docker-idrac6/docker-idrac6
+          tag_with_ref: true
